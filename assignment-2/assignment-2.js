@@ -22,9 +22,8 @@ window.onload = function init()
     
     setup();
 
-    //
     //  Configure WebGL
-    //
+
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 0.8, 0.8, 0.8, 1.0 );
     colors = vec3(0.4, 0.4, 1.0);
