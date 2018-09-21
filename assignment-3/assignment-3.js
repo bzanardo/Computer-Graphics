@@ -31,7 +31,7 @@ window.onload = function init()
     for (var i = 0; i < 36; i++) {  // Circle
         var x = radius*Math.cos(i * 10 *(Math.PI)/180);
         var y = radius*Math.sin(i * 10 *(Math.PI)/180);
-        vertices.push(vec2(x, y));
+        vertices.push(vec3(x, y, 0));
 
     }
 
@@ -127,11 +127,13 @@ window.onload = function init()
     for (var i = 0; i < index.length; i++) {    // ND Logo coordinates
         for (var j = 0; j < 3; j++) {
             var x = vertices1[index[i][j]];
-            vertices.push(x);
+            x.push(0.0);
+            //console.log(x);
+            vertices.push(vec3(x[0], x[1], x[2]));
         }
     }
 
-    vertices.push(vec2(-0.05, 0), vec2(-0.05, 0.05), vec2(0.05, 0.05), vec2(0.05, 0));
+    vertices.push(vec3(-0.05, 0, 0), vec3(-0.05, 0.05, 0), vec3(0.05, 0.05,0), vec3(0.05, 0, 0));
 
     
     // Load the data into the GPU
@@ -141,7 +143,7 @@ window.onload = function init()
 
     // Associate out shader variables with our data buffer
     var a_vPositionLoc = gl.getAttribLocation( program, "a_vPosition" );
-    gl.vertexAttribPointer( a_vPositionLoc, 2, gl.FLOAT, false, 0, 0 );
+    gl.vertexAttribPointer( a_vPositionLoc, 3, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( a_vPositionLoc );
     
     u_baseColorLoc = gl.getUniformLocation( program, "u_baseColor" );
@@ -162,109 +164,110 @@ function render() {
     var scaling_mm = 0.4;   // scale minute marks
     
     var tm, sm, rm; // translation, scaling, rotation
-    var ctm; // current transformation matrix
+    var outerMat, innerMat, logoMat, centerMat, hourMat, minuteMat; // current transformation matrix
 
     // Gold circle
-    ctm = mat4();
+    outerMat = mat4();
 
     gl.uniform3fv( u_baseColorLoc, vec3( 0.85, 0.65, 0.125 ) );
-    gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(ctm));
+    gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(outerMat));
     gl.drawArrays( gl.TRIANGLE_FAN, 0, 36);
 
 
     // White circle
-    ctm = mat4();
+    innerMat = mat4();
     sm = scalem(scaling_c, scaling_c, 1.0);
-    ctm = mult(sm, ctm);
+    innerMat = mult(sm, innerMat);
 
     gl.uniform3fv( u_baseColorLoc, vec3( 1.0, 1.0, 1.0 ) );
-    gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(ctm));
+    gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(innerMat));
     gl.drawArrays( gl.TRIANGLE_FAN, 0, 36);
 
 
     // ND Logo
 
-    ctm = mat4(1.0);
+    logoMat = mat4();
     sm = scalem(scaling_l, scaling_l, 1.0);
-    ctm = mult(sm, ctm);
+    logoMat = mult(sm, logoMat);
 
 
     for (var i=0; i < 34; i++)
     {
-        gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(ctm));
         gl.uniform3fv(u_baseColorLoc, vec3( 0.0, 0.0, 0.8 ));
+        gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(logoMat));
         gl.drawArrays( gl.TRIANGLES, 36+(i*3), 3);
     
     }
 
     // Small gold circle
 
-    ctm = mat4();
+    centerMat = mat4();
     sm = scalem(scaling_s, scaling_s, 1.0);
-    ctm = mult(sm, ctm);
+    centerMat = mult(sm, centerMat);
 
     gl.uniform3fv( u_baseColorLoc, vec3( 0.85, 0.65, 0.125 ) );
-    gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(ctm));
+    gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(centerMat));
     gl.drawArrays( gl.TRIANGLE_FAN, 0, 36);
 
     // Hour markers
-    ctm = mat4();
+    hourMat = mat4();
     theta = 90;
     var hourMarkersMats = [];
 
     for (var i = 0; i < 12; i++) {
-        ctm = mat4();
+        hourMat = mat4();
         sm = scalem(scaling_hm, scaling_mm, 1.0);
-        ctm = mult(sm, ctm);
+        hourMat = mult(sm, hourMat);
         var xpos = ((radius*scaling_c*scaling_c)*Math.cos(theta*(Math.PI)/180)) ;
         var ypos = ((radius*scaling_c*scaling_c)*Math.sin(theta* (Math.PI)/180));
         theta += 30;
 
         rm = rotateZ(i*30 + 90);
-        ctm = mult(rm, ctm);
+        hourMat = mult(rm, hourMat);
 
         tm = translate(xpos, ypos, 0.0);
-        ctm = mult(tm, ctm)
+        hourMat = mult(tm, hourMat)
 
-        hourMarkersMats[i] = ctm;
+        hourMarkersMats[i] = hourMat;
 
     }
 
     for (var i = 0; i < 12; i++) {
-        ctm = hourMarkersMats[i];
-        gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(ctm));
+        hourMat = hourMarkersMats[i];
         gl.uniform3fv(u_baseColorLoc, vec3( 0.0, 0.0, 0.8));
+        gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(hourMat));
         gl.drawArrays( gl.TRIANGLE_FAN, vertices.length - 4, 4);
     }
 
     // Minute markers
 
-    ctm = mat4();
+    minuteMat = mat4();
     theta = 90;
     var minuteMarkersMats = [];
 
     for (var i = 0; i < 60; i++) {
-        ctm = mat4();
+        minuteMat = mat4();
         sm = scalem(scaling_mm, scaling_mm, 1.0);
-        ctm = mult(sm, ctm);
+        minuteMat = mult(sm, minuteMat);
+
         var xpos = ((radius*scaling_c*0.97)*Math.cos(theta*(Math.PI)/180)) ;
         var ypos = ((radius*scaling_c*0.97)*Math.sin(theta* (Math.PI)/180));
         theta += 6;
 
         rm = rotateZ(i*6 + 90);
-        ctm = mult(rm, ctm);
+        minuteMat = mult(rm, minuteMat);
 
         tm = translate(xpos, ypos, 0.0);
-        ctm = mult(tm, ctm)
+        minuteMat = mult(tm, minuteMat)
 
-        minuteMarkersMats[i] = ctm;
+        minuteMarkersMats[i] = minuteMat;
 
     }
     
     for (var i = 0; i < 60; i++) {
-        ctm = minuteMarkersMats[i];
-        gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(ctm));
+        minuteMat = minuteMarkersMats[i];
         gl.uniform3fv(u_baseColorLoc, vec3( 0.0, 0.0, 0.8));
+        gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(minuteMat));
         gl.drawArrays( gl.TRIANGLE_FAN, vertices.length - 4, 4);
     }
     
