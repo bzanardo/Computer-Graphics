@@ -128,7 +128,6 @@ window.onload = function init()
         for (var j = 0; j < 3; j++) {
             var x = vertices1[index[i][j]];
             x.push(0.0);
-            //console.log(x);
             vertices.push(vec3(x[0], x[1], x[2]));
         }
     }
@@ -162,12 +161,14 @@ function render() {
     var scaling_s = 0.03;   // scale small gold circle
     var scaling_hm = 0.7;   // scale hour marks
     var scaling_mm = 0.4;   // scale minute marks
+    var pm = ortho(-1, 1, -1, 1, -1, 1);    // projection matrix
     
     var tm, sm, rm; // translation, scaling, rotation
     var outerMat, innerMat, logoMat, centerMat, hourMat, minuteMat; // current transformation matrix
 
     // Gold circle
     outerMat = mat4();
+    outerMat = mult(pm, outerMat);
 
     gl.uniform3fv( u_baseColorLoc, vec3( 0.85, 0.65, 0.125 ) );
     gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(outerMat));
@@ -178,6 +179,7 @@ function render() {
     innerMat = mat4();
     sm = scalem(scaling_c, scaling_c, 1.0);
     innerMat = mult(sm, innerMat);
+    innerMat = mult(pm, innerMat);
 
     gl.uniform3fv( u_baseColorLoc, vec3( 1.0, 1.0, 1.0 ) );
     gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(innerMat));
@@ -189,6 +191,7 @@ function render() {
     logoMat = mat4();
     sm = scalem(scaling_l, scaling_l, 1.0);
     logoMat = mult(sm, logoMat);
+    logoMat = mult(pm, logoMat);
 
 
     for (var i=0; i < 34; i++)
@@ -204,6 +207,7 @@ function render() {
     centerMat = mat4();
     sm = scalem(scaling_s, scaling_s, 1.0);
     centerMat = mult(sm, centerMat);
+    centerMat = mult(pm, centerMat);
 
     gl.uniform3fv( u_baseColorLoc, vec3( 0.85, 0.65, 0.125 ) );
     gl.uniformMatrix4fv(u_cMatrixLoc, false, flatten(centerMat));
@@ -227,6 +231,7 @@ function render() {
 
         tm = translate(xpos, ypos, 0.0);
         hourMat = mult(tm, hourMat)
+        hourMat = mult(pm, hourMat);
 
         hourMarkersMats[i] = hourMat;
 
@@ -259,6 +264,7 @@ function render() {
 
         tm = translate(xpos, ypos, 0.0);
         minuteMat = mult(tm, minuteMat)
+        minuteMat = mult(pm, minuteMat);
 
         minuteMarkersMats[i] = minuteMat;
 
