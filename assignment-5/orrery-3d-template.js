@@ -61,6 +61,31 @@ var sphereVertexPositionBuffer;
 var sphereVertexIndexBuffer;
 
 var animate;
+var m_inc;
+var m_curquat;
+var m_mousex = 1;
+var m_mousey = 1;
+var trackballMove = false;
+
+var earthX;
+var angleOffset
+var orMoonNew;
+
+function mouseMotion( x,  y)
+{
+        var lastquat;
+        if (m_mousex != x || m_mousey != y)
+        {
+            lastquat = trackball(
+                  (2.0*m_mousex - canvas.width) / canvas.width,
+                  (canvas.height - 2.0*m_mousey) / canvas.height,
+                  (2.0*x - canvas.width) / canvas.width,
+                  (canvas.height - 2.0*y) / canvas.height);
+            m_curquat = add_quats(lastquat, m_curquat);
+            m_mousex = x;
+            m_mousey = y;
+        }
+}
 
 window.onload = function init()
 {
@@ -77,6 +102,8 @@ window.onload = function init()
     gl.clearColor( 0.85, 0.85, 0.85, 1.0 );
     
     gl.enable(gl.DEPTH_TEST);
+
+    m_curquat = trackball(0, 0, 0, 0);
  
     currentDay = 0;
     daysPerFrame = 1.0;
@@ -117,17 +144,37 @@ window.onload = function init()
 
     var increaseDPF = document.getElementById("increase-DPF");
     increaseDPF.onclick = function() {
-    	daysPerFrame += 0.5;
+    	daysPerFrame = daysPerFrame*2;
     }
 
     var decreaseDPF = document.getElementById("decrease-DPF");
     decreaseDPF.onclick = function() {
-    	daysPerFrame -= 0.5;
+    	daysPerFrame = daysPerFrame*0.5;
     }
 
     if (document.getElementById("animon").checked == true){
     	animate = true;
     }
+
+    canvas.addEventListener("mousedown", function(event){
+        m_mousex = event.clientX - event.target.getBoundingClientRect().left;
+        m_mousey = event.clientY - event.target.getBoundingClientRect().top;
+        trackballMove = true;
+    });
+
+    // for trackball
+    canvas.addEventListener("mouseup", function(event){
+        trackballMove = false;
+    });
+
+    // for trackball
+    canvas.addEventListener("mousemove", function(event){
+      if (trackballMove) {
+        var x = event.clientX - event.target.getBoundingClientRect().left;
+        var y = event.clientY - event.target.getBoundingClientRect().top;
+        mouseMotion(x, y);
+      }
+    });
     
     render();
     
@@ -230,13 +277,21 @@ function drawOrbits() {
     // Earth
     stack.push(mat4());
     drawCircle( gray, orEarth );
+
+    // Moon
+    orMoonNew = Math.max(orMoon,(rEarth+rMoon)* rPlanetMult);
+    var m = mult(rotateY(angleOffset/pEarth), translate(orEarth, 0.0, 0.0), rotateZ(23.5));
+
+    stack.push(m);
+    drawCircle( gray, orMoonNew);
     stack.pop();
+
 
 }
 
 function drawBodies() {
     var size;
-    var angleOffset = currentDay * 360.0;  // days * degrees
+    angleOffset = currentDay * 360.0;  // days * degrees
     
     // Sun
     size = rSun * rSunMult;
@@ -260,7 +315,15 @@ function drawBodies() {
     size = rEarth * rPlanetMult;
     stack.push(mult(rotateY(angleOffset/pEarth), translate(orEarth, 0.0, 0.0), rotateZ(23.5)));
     drawSphere( vec3( 0.5, 0.5, 1.0 ), size );
+    // Moon
+    size = rMoon * rPlanetMult;
+    orMoonNew=Math.max(orMoon,(rEarth+rMoon)* rPlanetMult);
+    var m = mult(rotateY(angleOffset/pMoon), translate(orMoonNew, 0.0, 0.0), rotateZ(23.5));
+    var topm = stack[stack.length-1];
+    stack[stack.length-1] = mult(topm, m);
+    drawSphere( vec3( 1.0, 1.0, 1.0 ), size );
     stack.pop();
+
     
 }
 
@@ -279,7 +342,12 @@ function drawAll()
     commonMVPMatrix = scalem(globalScale, globalScale, globalScale);
 
     // tilt along x axis
-    commonMVPMatrix = mult(rotateX(15), commonMVPMatrix);
+    commonMVPMatrix = mult(rotateX(-15), commonMVPMatrix);
+
+    // trackball matrix
+    m_inc = build_rotmatrix(m_curquat);
+    m_inc = mult(ortho(-1, 1, -1, 1, -1, 1), m_inc);
+    commonMVPMatrix = mult(m_inc, commonMVPMatrix);
     
     // viewing matrix
     commonMVPMatrix = mult(lookAt(vec3(0.0, 0.0, 100.0),
@@ -315,8 +383,6 @@ var render = function() {
 	        currentDay += daysPerFrame;
 	        elapsed = 0;
 	    }
-	    //requestAnimFrame(render);
-	    //drawAll();
 	}
 	requestAnimFrame(render);
 	drawAll();
