@@ -67,7 +67,6 @@ var m_mousex = 1;
 var m_mousey = 1;
 var trackballMove = false;
 
-var earthX;
 var angleOffset
 var orMoonNew;
 
@@ -276,12 +275,11 @@ function drawOrbits() {
 
     // Earth
     stack.push(mat4());
-    drawCircle( gray, orEarth );
+    drawCircle( gray, orEarth);
 
     // Moon
     orMoonNew = Math.max(orMoon,(rEarth+rMoon)* rPlanetMult);
-    var m = mult(rotateY(angleOffset/pEarth), translate(orEarth, 0.0, 0.0), rotateZ(23.5));
-
+    var m = mult(rotateY(angleOffset/pEarth), mult(translate(orEarth, 0.0, 0.0), rotateZ(23.5)));
     stack.push(m);
     drawCircle( gray, orMoonNew);
     stack.pop();
@@ -313,12 +311,13 @@ function drawBodies() {
 
     // Earth
     size = rEarth * rPlanetMult;
-    stack.push(mult(rotateY(angleOffset/pEarth), translate(orEarth, 0.0, 0.0), rotateZ(23.5)));
+    stack.push(mult(rotateY(angleOffset/pEarth), mult(translate(orEarth, 0.0, 0.0), rotateZ(23.5))));
     drawSphere( vec3( 0.5, 0.5, 1.0 ), size );
+    
     // Moon
     size = rMoon * rPlanetMult;
-    orMoonNew=Math.max(orMoon,(rEarth+rMoon)* rPlanetMult);
-    var m = mult(rotateY(angleOffset/pMoon), translate(orMoonNew, 0.0, 0.0), rotateZ(23.5));
+    orMoonNew = Math.max(orMoon,(rEarth+rMoon)* rPlanetMult);
+    var m = mult(rotateY(angleOffset/pMoon), translate(orMoonNew, 0.0, 0.0));
     var topm = stack[stack.length-1];
     stack[stack.length-1] = mult(topm, m);
     drawSphere( vec3( 1.0, 1.0, 1.0 ), size );
@@ -342,11 +341,11 @@ function drawAll()
     commonMVPMatrix = scalem(globalScale, globalScale, globalScale);
 
     // tilt along x axis
-    commonMVPMatrix = mult(rotateX(-15), commonMVPMatrix);
+    commonMVPMatrix = mult(rotateX(15), commonMVPMatrix);
 
     // trackball matrix
     m_inc = build_rotmatrix(m_curquat);
-    m_inc = mult(ortho(-1, 1, -1, 1, -1, 1), m_inc);
+    //m_inc = mult(ortho(-1, 1, -1, 1, -1, 1), m_inc);
     commonMVPMatrix = mult(m_inc, commonMVPMatrix);
     
     // viewing matrix
