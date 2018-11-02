@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+    
+attribute vec4 a_vPosition;
+attribute vec3 a_vNormal;
+uniform mat4 u_modelViewMatrix;
+uniform vec4 u_lightPosition;
+uniform mat3 u_nMatrix;
+uniform bool u_UseLighting;
+uniform mat4 u_mvpMatrix;
+
+uniform vec4 u_ambientProduct;
+uniform vec4 u_diffuseProduct;
+uniform vec4 u_specularProduct;
+uniform float u_shininess;
+varying vec4 v_fColor;
+
+
+
+void
+main()
+{
+    vec3 NN, NL, NE;
+
+    gl_Position = u_mvpMatrix * a_vPosition;
+
+    if (!u_UseLighting) {
+        // draw the orbits
+        v_fColor = vec4(0.2, 0.2, 0.2, 1.0);
+    }
+    else {
+         // transform vertex position to the eye space
+        
+        vec3 pos = (u_modelViewMatrix * a_vPosition).xyz;
+        // transform vertex normal to the eye space
+        NN = normalize(u_nMatrix * a_vNormal);
+        
+        if (u_lightPosition.w == 0.0)
+            // directional light
+            NL = normalize(u_lightPosition.xyz);
+        else
+            // point light
+            NL = normalize(u_lightPosition.xyz - pos);
+        
+        NE = -normalize(pos); // eye position in the eye space is (0, 0, 0)
+
+        
+        vec3 NR = -reflect(NL, NN);
+        
+        // ambient
+        vec4 ambient = u_ambientProduct;
+        
+        // diffuse
+        float Kd = max(dot(NL, NN), 0.0);
+        vec4 diffuse = Kd * u_diffuseProduct;
+        
+
+        // specular
+        float Ks = pow(max(dot(NE, NR), 0.0), u_shininess);
+        vec4 specular = Ks * u_specularProduct;
+        
+        if (dot(NL, NN) < 0.0)
+            specular = vec4(0.0, 0.0, 0.0, 1.0);
+        
+        // per-fragment lighting, write your code here
+        
+        v_fColor = ambient + diffuse + specular;
+        v_fColor.a = 1.0;
+
+    }
+}
+
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec4 v_fColor;
+
+void
+main()
+{
+    gl_FragColor = v_fColor; 
+}
+</script>
+
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="trackball.js"></script>
+<script type="text/javascript" src="orrery-3d-template.js"></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="1024" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+<br><br>
+
+<div class="slidecontainer">
+  <input type="range" min="0" max="1" value="1" class="slider" step=0.1 id="rSlider"> Red
+</div>
+
+<div class="slidecontainer">
+  <input type="range" min="0" max="1" value="1" class="slider" step=0.1 id="gSlider"> Green
+</div>
+
+<div class="slidecontainer">
+  <input type="range" min="0" max="1" value="1" class="slider" step=0.1 id="bSlider"> Blue
+</div>
+
+<div>
+	<button type="button" id="increase-DPF">Inc DPF</button>
+	<button type="button" id="decrease-DPF">Dec DPF</button>
+</div>
+<form>
+    <input type="radio" name="function" id="orbon" checked>Orbit On
+    <input type="radio" name="function" id="orboff">Orbit Off
+</form>
+<form>
+    <input type="radio" name="function" id="dayon" checked>Day On
+    <input type="radio" name="function" id="dayoff">Day Off
+</form>
+<form>
+    <input type="radio" name="function" id="animon" checked>Animation On
+    <input type="radio" name="function" id="animoff">Animation Off
+</form>
+
+<!--- The statistics are printed here. --->
+<p id="printDay"></p>
+
+</body>
+</html>
