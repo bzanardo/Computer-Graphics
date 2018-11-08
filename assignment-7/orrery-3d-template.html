@@ -36,7 +36,7 @@ main()
 
     if (!u_UseLighting) {
         // draw the orbits
-        v_fColor = vec4(0.2, 0.2, 0.2, 1.0);
+        v_fColor = vec4(1.0, 1.0, 1.0, 1.0);
     }
     else {
          // transform vertex position to the eye space
@@ -77,8 +77,6 @@ main()
         v_fColor = ambient + diffuse + specular;
         v_fColor.a = 1.0;
 
-        //v_fColor = a_vColor;
-
     }
 }
 
@@ -91,13 +89,18 @@ precision mediump float;
 uniform sampler2D u_textureSampler;
 varying vec2 v_fTextureCoord;
 varying vec4 v_fColor;
+uniform bool u_UseLighting;
 
 
 void
 main()
 {
-    //gl_FragColor = v_fColor; 
-    gl_FragColor = v_fColor * texture2D(u_textureSampler, v_fTextureCoord);
+    if (!u_UseLighting) {
+        gl_FragColor = v_fColor;
+    }
+    else {
+        gl_FragColor = v_fColor * texture2D(u_textureSampler, v_fTextureCoord);
+    }
 }
 </script>
 

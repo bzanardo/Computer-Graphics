@@ -146,7 +146,7 @@ window.onload = function init()
     //  Configure WebGL
     //
     gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.clearColor( 0.85, 0.85, 0.85, 1.0 );
+    gl.clearColor( 0.2, 0.2, 0.2, 1.0 );
     
     gl.enable(gl.DEPTH_TEST);
 
@@ -427,7 +427,7 @@ function drawSphere(color, size, texture) {
 }
 
 function drawOrbits() {
-    var gray = vec3( 0.2, 0.2, 0.2 );
+    var gray = vec3( 1.0, 1.0, 1.0 );
     
     // Venus
     stack.push(mat4());
