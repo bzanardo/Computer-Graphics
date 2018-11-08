@@ -153,7 +153,7 @@ window.onload = function init()
     m_curquat = trackball(0, 0, 0, 0);
  
     currentDay = 0;
-    daysPerFrame = 1.0;
+    daysPerFrame = 0.0625;
     
     // global scaling for the entire orrery
     globalScale = 50.0 / ( orEarth + orMoon + ( rEarth + 2 * rMoon ) * rPlanetMult );
@@ -478,13 +478,14 @@ function drawBodies() {
     // Earth
     size = rEarth * rPlanetMult;
     stack.push(mult(rotateY(angleOffset/pEarth), mult(translate(orEarth, 0.0, 0.0), rotateZ(23.5))));
+    stack.push(mult(rotateY(angleOffset/pEarth), mult(translate(orEarth, 0.0, 0.0), rotateY(angleOffset), rotateZ(23.5))));
     drawSphere( vec3( 0.5, 0.5, 1.0 ), size, earthTexture);
     
     // Moon
     size = rMoon * rPlanetMult;
     orMoonNew = Math.max(orMoon,(rEarth+rMoon)* rPlanetMult);
     var m = mult(rotateY(angleOffset/pMoon), translate(orMoonNew, 0.0, 0.0));
-    var topm = stack[stack.length-1];
+    var topm = stack[stack.length-2];
     stack[stack.length-1] = mult(topm, m);
     drawSphere( vec3( 1.0, 1.0, 1.0 ), size, moonTexture);
     stack.pop();
