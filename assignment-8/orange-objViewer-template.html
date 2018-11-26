@@ -69,7 +69,6 @@ main()
 
     vec3 vertexBitangentES = normalize(a_Bitangent);
     vertexBitangentES = u_MvMatrix_3by3 * vertexBitangentES;
-   //v_Test = normalize(a_Normal);
 
     mat3 TBN = mat3(vec3(vertexTangentES.x, vertexBitangentES.x, vertexNormalES.x),vec3(vertexTangentES.y, vertexBitangentES.y, vertexNormalES.y),vec3(vertexTangentES.z, vertexBitangentES.z, vertexNormalES.z));
     v_LightDirectionTS = TBN * v_L;
@@ -110,9 +109,9 @@ main()
     textureColor = texture2D(u_TextureSampler, v_TexCoord).rgb;
     textureNormal = texture2D(u_TextureSamplerNormal, v_TexCoord).rgb;
 
-    textureNormal.r = (textureNormal.r * 2.0) - 1.0;
-    textureNormal.g = (textureNormal.g * 2.0) - 1.0;
-    textureNormal.b = (textureNormal.b * 2.0) - 1.0;
+    textureNormal.r = 2.0 * textureNormal.r - 1.0;
+    textureNormal.g = 2.0 * textureNormal.g - 1.0;
+    textureNormal.b = 2.0 * textureNormal.b - 1.0;
 
     textureNormal = normalize(textureNormal);
 
@@ -135,7 +134,6 @@ main()
       float Kd = max( dot(NL, NN), 0.0 );
       vec4  diffuse = Kd*u_diffuseProduct;
 
-      //float Ks = pow( max(dot(NN, NH), 0.0), u_shininess );
       float Ks = pow(max(dot(NE, NR), 0.0), u_shininess);
       vec4  specular = Ks * u_specularProduct;
 
@@ -146,28 +144,27 @@ main()
       fColor.a = 1.0;
 
       gl_FragColor = fColor * vec4(textureColor, 1.0);
-      //gl_FragColor = vec4(textureNormal, 1.0);
 
     }
     else if (u_UseLight && u_UseTexture) {
-      vec3 NR = -reflect(TL, NN);
+      vec3 NR = -reflect(TL, textureNormal);
 
       vec4 ambient = u_ambientProduct;
 
-      float Kd = max( dot(TL, NN), 0.0 );
+      float Kd = max( dot(TL, textureNormal), 0.0 );
       vec4  diffuse = Kd*u_diffuseProduct;
 
       //float Ks = pow( max(dot(NN, NH), 0.0), u_shininess );
       float Ks = pow(max(dot(TE, NR), 0.0), u_shininess);
       vec4  specular = Ks * u_specularProduct;
 
-      if( dot(TL, NN) < 0.0 )
+      if( dot(TL, textureNormal) < 0.0 )
           specular = vec4(0.0, 0.0, 0.0, 1.0);
 
       fColor = ambient + diffuse + specular;
       fColor.a = 1.0;
 
-      gl_FragColor = fColor * vec4(textureColor, 1.0) * vec4(textureNormal, 1.0);
+      gl_FragColor = fColor * vec4(textureColor, 1.0);
     }
     else {
       gl_FragColor = vec4(textureColor, 1.0);
